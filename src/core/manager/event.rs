@@ -76,6 +76,7 @@ pub enum EventAction {
     SetActiveClient(Xid),
     /// The active workspace should be set to this index
     SetActiveWorkspace(usize),
+    SetScreenActiveWorkspace(usize),
     /// The active screen should be set based on point location
     SetScreenFromPoint(Option<Point>),
     /// An X window should be set fullscreen

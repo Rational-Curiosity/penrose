@@ -330,6 +330,7 @@ impl<X: XConn> WindowManager<X> {
             },
             SetActiveClient(id) => self.set_active_client(id)?,
             SetActiveWorkspace(wix) => self.focus_workspace(&Selector::Index(wix))?,
+            SetScreenActiveWorkspace(wix) => {self.workspaces.focus(&Selector::Index(wix));},
             SetScreenFromPoint(p) => self.set_screen_from_point(p)?,
             ToggleClientFullScreen(id, should_fullscreen) => {
                 self.set_fullscreen(id, should_fullscreen)?;

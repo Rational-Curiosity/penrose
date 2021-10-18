@@ -140,7 +140,7 @@ impl Screens {
             state.warp_cursor(None, focused)?;
 
             Ok(vec![
-                EventAction::SetActiveWorkspace(focused.wix),
+                EventAction::SetScreenActiveWorkspace(focused.wix),
                 EventAction::RunHook(HookName::ScreenChange),
             ])
         } else {
