@@ -23,6 +23,7 @@ use crate::{core::layout::LayoutFunc, PenroseError};
 
 #[cfg(feature = "serde")]
 use std::collections::HashMap;
+use itertools::Itertools;
 
 pub(crate) struct ArrangeActions {
     pub(crate) actions: Vec<ResizeAction>,
@@ -261,7 +262,9 @@ impl Workspace {
         if self.clients.len() > 0 {
             let layout = self.layouts.focused_unchecked();
             let (floating, tiled): (Vec<&Client>, Vec<&Client>) =
-                managed_workspace_clients.iter().partition(|c| c.floating);
+                managed_workspace_clients.iter().sorted_by_key(
+                    |c| self.clients.iter().position(|&id| id == c.id()))
+                .partition(|c| c.floating);
 
             debug!(
                 layout = ?layout.symbol,
