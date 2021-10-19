@@ -197,6 +197,24 @@ impl From<&::xcb::GenericError> for XcbError {
     }
 }
 
+impl From<::xcb::ReplyError> for XcbError {
+    fn from(raw: ::xcb::ReplyError) -> Self {
+        match raw {
+            ::xcb::ReplyError::GenericError(err) => from_error_code(err.error_code(), err.response_type()),
+            ::xcb::ReplyError::NullResponse => XcbError::XcbUnknown(0, 0),
+        }
+    }
+}
+
+impl From<&::xcb::ReplyError> for XcbError {
+    fn from(raw: &::xcb::ReplyError) -> Self {
+        match raw {
+            ::xcb::ReplyError::GenericError(err) => from_error_code(err.error_code(), err.response_type()),
+            ::xcb::ReplyError::NullResponse => XcbError::XcbUnknown(0, 0),
+        }
+    }
+}
+
 /// Base X11 error codes taken from /usr/include/X11/X.h (line 347)
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Ord, PartialOrd)]
 pub enum XErrorCode {
