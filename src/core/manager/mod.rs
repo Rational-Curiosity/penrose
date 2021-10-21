@@ -838,6 +838,23 @@ impl<X: XConn> WindowManager<X> {
         Ok(())
     }
 
+    fn cursor_over_client(&mut self, id: Xid) -> bool {
+        if let Ok(cursor_position) = self.conn.cursor_position()
+        {
+            if let Ok(client_geometry) = self.conn.client_geometry(id)
+            {
+                if client_geometry.x < cursor_position.x &&
+                    client_geometry.y < cursor_position.y &&
+                    cursor_position.x < client_geometry.x + client_geometry.w &&
+                    cursor_position.y < client_geometry.y + client_geometry.h
+                {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     /// Focus the [Client] matching the given [Selector]
     pub fn focus_client(&mut self, selector: &Selector<'_, Client>) -> Result<Xid> {
         let id = match self.client(selector) {
@@ -853,9 +870,11 @@ impl<X: XConn> WindowManager<X> {
 
         // update focused client if there is a new client that is in focus
         self.update_focus(id)?;
-        let screen = self.screens.focused();
-        self.conn.warp_cursor(Some(id), screen)?;
-
+        if !self.cursor_over_client(id)
+        {
+            let screen = self.screens.focused();
+            self.conn.warp_cursor(Some(id), screen, &self.config)?;
+        }
         Ok(id)
     }
 
