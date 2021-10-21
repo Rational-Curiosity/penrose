@@ -13,6 +13,7 @@ use crate::{
         client::Client,
         data_types::{Point, Region},
         screen::Screen,
+        config::Config,
     },
     draw::Color,
 };
@@ -158,7 +159,7 @@ pub trait XState: XAtomQuerier {
     /// Warp the cursor to be within the specified window. If id == None then behaviour is
     /// definined by the implementor (e.g. warp cursor to active window, warp to center of screen)
     #[stub(Ok(()))]
-    fn warp_cursor(&self, win_id: Option<Xid>, screen: &Screen) -> Result<()>;
+    fn warp_cursor(&self, win_id: Option<Xid>, screen: &Screen, config: &Config) -> Result<()>;
 
     /// Return the current (x, y, w, h) dimensions of the requested window
     #[stub(Ok(Region::default()))]

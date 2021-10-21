@@ -21,6 +21,7 @@ use crate::{
             Atom, ClientAttr, ClientConfig, ClientMessage, ClientMessageKind, Prop, Result,
             WindowState, XConn, XEvent, XEventHandler, Xid,
         },
+        config::Config,
     },
     xcb::{Api, XcbError},
 };
