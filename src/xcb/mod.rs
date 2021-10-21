@@ -277,15 +277,16 @@ macro_rules! __xcb_impl_xstate {
                 Ok(self.api.cursor_position()?)
             }
 
-            fn warp_cursor(&self, win_id: Option<Xid>, screen: &Screen) -> $crate::core::xconnection::Result<()> {
+            fn warp_cursor(&self, win_id: Option<Xid>, screen: &Screen, config: &Config) -> $crate::core::xconnection::Result<()> {
                 let (x, y, id) = match win_id {
                     Some(id) => {
                         let (_, _, w, h) = self.client_geometry(id)?.values();
-                        ((w / 2), (h / 2), id)
+                        ((w - config.border_px()), (h - config.border_px()), id)
                     }
                     None => {
                         let (x, y, w, h) = screen.region(true).values();
-                        ((x + w / 2), (y + h / 2), self.api.root())
+                        ((x + w - config.gap_px() - config.border_px()),
+                         (y + h - config.gap_px() - config.border_px()), self.api.root())
                     }
                 };
 

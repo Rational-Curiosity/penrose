@@ -7,6 +7,7 @@ use crate::{
         ring::{Direction, Ring, Selector},
         screen::Screen,
         xconnection::XState,
+        config::Config,
     },
     Result,
 };
@@ -130,14 +131,14 @@ impl Screens {
         }
     }
 
-    pub fn cycle_screen<S>(&mut self, direction: Direction, state: &S) -> Result<Vec<EventAction>>
+    pub fn cycle_screen<S>(&mut self, direction: Direction, state: &S, config: &Config) -> Result<Vec<EventAction>>
     where
         S: XState,
     {
         if !self.inner.would_wrap(direction) {
             self.inner.cycle_focus(direction);
             let focused = self.inner.focused_unchecked();
-            state.warp_cursor(None, focused)?;
+            state.warp_cursor(None, focused, &config)?;
 
             Ok(vec![
                 EventAction::SetScreenActiveWorkspace(focused.wix),
@@ -217,7 +218,7 @@ mod tests {
         let mut s = Screens::new(10, true);
         let conn = MockXConn::new(raw_screens(), vec![], vec![]);
         s.update_known_screens(&conn, 10).unwrap();
-        let events = s.cycle_screen(Direction::Forward, &conn).unwrap();
+        let events = s.cycle_screen(Direction::Forward, &conn, Config::default()).unwrap();
 
         assert_eq!(
             events,
@@ -233,7 +234,7 @@ mod tests {
         let mut s = Screens::new(10, true);
         let conn = MockXConn::new(raw_screens(), vec![], vec![]);
         s.update_known_screens(&conn, 10).unwrap();
-        let events = s.cycle_screen(Direction::Backward, &conn);
+        let events = s.cycle_screen(Direction::Backward, &conn, Config::default());
 
         assert!(events.unwrap().is_empty())
     }

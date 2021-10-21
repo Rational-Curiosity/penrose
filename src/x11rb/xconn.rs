@@ -18,6 +18,7 @@ use crate::{
             XAtomQuerier, XClientConfig, XClientHandler, XClientProperties, XConn, XError, XEvent,
             XEventHandler, XState, Xid,
         },
+        config::Config,
     },
     x11rb::{atom::Atoms, X11rbError},
 };
@@ -474,15 +475,16 @@ impl<C: Connection> XState for X11rbConnection<C> {
         Ok(Point::new(reply.root_x as u32, reply.root_y as u32))
     }
 
-    fn warp_cursor(&self, win_id: Option<Xid>, screen: &Screen) -> Result<()> {
+    fn warp_cursor(&self, win_id: Option<Xid>, screen: &Screen, config: &Config) -> Result<()> {
         let (x, y, id) = match win_id {
             Some(id) => {
                 let (_, _, w, h) = self.client_geometry(id)?.values();
-                (w / 2, h / 2, id)
+                (w - config.border_px(), h - config.border_px(), id)
             }
             None => {
                 let (x, y, w, h) = screen.region(true).values();
-                (x + w / 2, y + h / 2, self.root)
+                (x + w - config.gap_px() - config.border_px(),
+                 y + h - config.gap_px() - config.border_px(), self.root)
             }
         };
 

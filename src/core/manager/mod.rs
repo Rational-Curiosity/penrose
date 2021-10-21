@@ -209,7 +209,7 @@ impl<X: XConn> WindowManager<X> {
         self.conn.set_wm_properties(&self.config.workspaces)?;
 
         trace!("Forcing cursor to first screen");
-        Ok(self.conn.warp_cursor(None, &self.screens.inner[0])?)
+        Ok(self.conn.warp_cursor(None, &self.screens.inner[0], &self.config)?)
     }
 
     #[tracing::instrument(level = "debug", err, skip(self))]
@@ -508,7 +508,7 @@ impl<X: XConn> WindowManager<X> {
 
             if self.screens.visible_workspaces().contains(&wix) {
                 let s = self.screens.focused();
-                self.conn.warp_cursor(Some(id), s)?;
+                self.conn.warp_cursor(Some(id), s, &self.config)?;
             } else {
                 self.clients.unmap_if_needed(id, &self.conn)?;
             }
@@ -597,7 +597,7 @@ impl<X: XConn> WindowManager<X> {
             self.apply_layout(wix)?;
             self.clients.map_if_needed(id, &self.conn)?;
             let s = self.screens.focused();
-            self.conn.warp_cursor(Some(id), s)?;
+            self.conn.warp_cursor(Some(id), s, &self.config)?;
         }
 
         Ok(())
@@ -792,7 +792,7 @@ impl<X: XConn> WindowManager<X> {
 
     /// Cycle between known [screens][Screen]. Does not wrap from first to last
     pub fn cycle_screen(&mut self, direction: Direction) -> Result<()> {
-        let actions = self.screens.cycle_screen(direction, &self.conn)?;
+        let actions = self.screens.cycle_screen(direction, &self.conn, &self.config)?;
         self.handle_event_actions(actions)
     }
 
@@ -825,7 +825,7 @@ impl<X: XConn> WindowManager<X> {
             self.clients.client_lost_focus(prev, &self.conn);
             self.update_focus(new)?;
             let screen = self.screens.focused();
-            self.conn.warp_cursor(Some(new), screen)?;
+            self.conn.warp_cursor(Some(new), screen, &self.config)?;
         }
 
         Ok(())
@@ -880,7 +880,7 @@ impl<X: XConn> WindowManager<X> {
             self.workspaces.drag_client(wix, direction);
             self.apply_layout(wix)?;
             self.update_focus(id)?;
-            self.conn.warp_cursor(Some(id), self.screens.focused())?;
+            self.conn.warp_cursor(Some(id), self.screens.focused(), &self.config)?;
         }
 
         Ok(())
