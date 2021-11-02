@@ -761,6 +761,16 @@ impl<X: XConn> WindowManager<X> {
      * user's main.rs
      */
 
+    /// Warp cursor
+    pub fn warp_cursor(&self) -> Result<()> {
+        if let Some(id) = self.focused_client_id()
+        {
+            let screen = self.screens.focused();
+            self.conn.warp_cursor(Some(id), screen, &self.config)?;
+        }
+        Ok(())
+    }
+
     /// Get an immutable reference to the underlying [XConn] impl that backs this [WindowManager]
     ///
     /// # A word of warning
