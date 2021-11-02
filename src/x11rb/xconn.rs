@@ -479,12 +479,12 @@ impl<C: Connection> XState for X11rbConnection<C> {
         let (x, y, id) = match win_id {
             Some(id) => {
                 let (_, _, w, h) = self.client_geometry(id)?.values();
-                (w - config.border_px(), h - config.border_px(), id)
+                (w - config.border_px() - 1, h - config.border_px() - 1, id)
             }
             None => {
                 let (x, y, w, h) = screen.region(true).values();
-                (x + w - config.gap_px() - config.border_px(),
-                 y + h - config.gap_px() - config.border_px(), self.root)
+                (x + w - config.gap_px() - config.border_px() - 1,
+                 y + h - config.gap_px() - config.border_px() - 1, self.root)
             }
         };
 
