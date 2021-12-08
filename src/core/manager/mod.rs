@@ -7,6 +7,7 @@ use crate::{
         data_types::{Change, Point, Region},
         hooks::{HookName, Hooks},
         ring::{Direction, InsertPoint, Selector},
+        helpers::spawn_with_args,
         screen::Screen,
         workspace::Workspace,
         xconnection::{Atom, ClientMessageKind, WindowState, XConn, Xid},
@@ -767,6 +768,39 @@ impl<X: XConn> WindowManager<X> {
         {
             let screen = self.screens.focused();
             self.conn.warp_cursor(Some(id), screen, &self.config)?;
+        }
+        Ok(())
+    }
+
+    /// Get current window opacity
+    pub fn get_win_opacity(&self) -> f32 {
+        self.config.win_opacity
+    }
+
+    /// Set window opacity and update transparency on windows
+    pub fn set_win_opacity(&mut self, opacity: f32) -> Result<()> {
+        let opacity_safe = match opacity {
+            opac if (0.0..=1.0).contains(&opac) => opac,
+            opac if opac < 0.0 => 0.0,
+            opac if 1.0 < opac => 1.0,
+            _ => 1.0,
+        };
+        if (opacity_safe - self.config.win_opacity).abs() < 0.01
+        {
+            return Ok(())
+        }
+        self.config.win_opacity = opacity_safe;
+        let opacity_str = opacity_safe.to_string();
+        for id in self.clients.all_known_ids().iter()
+        {
+            let client_class = match self.client(&Selector::WinId(*id)) {
+                Some(client) => client.wm_class().to_string(),
+                None => return Ok(())
+            };
+            if !self.config.opaque_classes.contains(&client_class)
+            {
+                let _ = spawn_with_args("transset", &["--id", &id.to_string(), &opacity_str]);
+            }
         }
         Ok(())
     }

@@ -67,6 +67,8 @@ __with_builder_and_getters! {
 
     /// the window classes that will always be considered floating
     VecImplInto floating_classes: String; => vec!["dmenu", "dunst"];
+    /// the window classes that penrose don't handle tansparency
+    VecImplInto opaque_classes: String; => vec!["emacs", "Alacritty"];
 
     /// the [Layout] functions to be used by each [Workspace][crate::core::workspace::Workspace]
     ///
@@ -94,6 +96,8 @@ __with_builder_and_getters! {
     Concrete top_bar: bool; => true;
     /// the height of the space to be reserved for a status bar in pixels
     Concrete bar_height: u32; => 18;
+    /// windows opacity
+    Concrete win_opacity: f32; => 0.9;
 }
 
 impl Config {
