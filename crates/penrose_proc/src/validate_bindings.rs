@@ -12,7 +12,7 @@ use syn::{
 
 use std::collections::HashSet;
 
-const VALID_MODIFIERS: [&str; 4] = ["A", "M", "S", "C"];
+const VALID_MODIFIERS: [&str; 5] = ["A", "M", "S", "C", "L"];
 
 struct Binding {
     raw: String,
