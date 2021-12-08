@@ -16,7 +16,8 @@ use crate::{
 };
 use strum::*;
 
-use std::{collections::HashMap, convert::TryFrom, fmt, str::FromStr};
+use std::{collections::HashMap, convert::TryFrom, fmt, str::FromStr,
+          thread, time};
 
 #[cfg(feature = "keysyms")]
 use crate::core::{bindings::KeyPress, xconnection::KeyPressParseAttempt};
@@ -79,6 +80,8 @@ pub struct Api {
     atoms: HashMap<Atom, u32>,
     #[cfg(feature = "keysyms")]
     code_map: ReverseCodeMap,
+    grab_retries: u8,
+    grab_retry_sleep: time::Duration,
 }
 
 impl fmt::Debug for Api {
@@ -123,6 +126,8 @@ impl Api {
             atoms: HashMap::new(),
             #[cfg(feature = "keysyms")]
             code_map: code_map_from_xmodmap()?,
+            grab_retries: 20,
+            grab_retry_sleep: time::Duration::from_millis(10),
         };
         api.init()?;
 
@@ -303,22 +308,58 @@ impl Api {
 
     /// Grab control of all keyboard input
     pub fn grab_keyboard(&self) -> Result<()> {
-        xcb::grab_keyboard(
-            &self.conn,
-            true,
-            self.root(),
-            xcb::CURRENT_TIME,
-            xcb::GRAB_MODE_ASYNC as u8,
-            xcb::GRAB_MODE_ASYNC as u8,
-        )
-        .get_reply()?;
+        let mut retries = self.grab_retries;
+        loop
+        {
+            if let Ok(reply) = xcb::grab_keyboard(
+                &self.conn,
+                true,
+                self.root,
+                xcb::CURRENT_TIME,
+                xcb::GRAB_MODE_ASYNC as u8,
+                xcb::GRAB_MODE_ASYNC as u8,
+            ).get_reply() {
+                if reply.status() == xcb::GRAB_STATUS_SUCCESS as u8 {
+                    break;
+                }
+            };
+            thread::sleep(self.grab_retry_sleep);
+            if retries == 0
+            {
+                xcb::grab_keyboard(
+                    &self.conn,
+                    true,
+                    self.root,
+                    xcb::CURRENT_TIME,
+                    xcb::GRAB_MODE_ASYNC as u8,
+                    xcb::GRAB_MODE_ASYNC as u8,
+                ).get_reply()?;
+                break;
+            }
+            retries -= 1;
+        }
 
         Ok(())
     }
 
     /// Release keyboard input
     pub fn ungrab_keyboard(&self) -> Result<()> {
-        xcb::ungrab_keyboard_checked(&self.conn, xcb::CURRENT_TIME).request_check()?;
+        let mut retries = self.grab_retries;
+        loop
+        {
+            if xcb::ungrab_keyboard_checked(
+                &self.conn, xcb::CURRENT_TIME).request_check().is_ok()
+            {
+                break;
+            }
+            thread::sleep(self.grab_retry_sleep);
+            if retries == 0
+            {
+                xcb::ungrab_keyboard_checked(&self.conn, xcb::CURRENT_TIME).request_check()?;
+                break;
+            }
+            retries -= 1;
+        }
 
         Ok(())
     }
