@@ -29,6 +29,7 @@ pub fn parse_key_binding(pattern: String, known_codes: &CodeMap) -> Option<KeyCo
                     "M" => xcb::MOD_MASK_4,
                     "S" => xcb::MOD_MASK_SHIFT,
                     "C" => xcb::MOD_MASK_CONTROL,
+                    "L" => xcb::MOD_MASK_LOCK,
                     _ => panic!("invalid key binding prefix: {}", s),
                 })
                 .fold(0, |acc, v| acc | v);
