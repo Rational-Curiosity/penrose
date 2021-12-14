@@ -868,7 +868,7 @@ impl Api {
         let resources = xcb::randr::get_screen_resources(&self.conn, check_win);
 
         // xcb docs: https://www.mankier.com/3/xcb_randr_get_crtc_info
-        let screens = resources
+        let mut screens: Vec<Screen> = resources
             .get_reply()?
             .crtcs()
             .iter()
@@ -888,6 +888,7 @@ impl Api {
                 w > 0
             })
             .collect();
+        screens.sort_by_key(|s| s.true_region.x);
 
         self.destroy_client(check_win)?;
         Ok(screens)
