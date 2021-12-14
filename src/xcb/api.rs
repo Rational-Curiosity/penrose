@@ -3,7 +3,7 @@ use crate::{
     core::{
         bindings::{KeyCode, KeyCodeMask, KeyCodeValue, MouseEvent, MouseState},
         data_types::{Point, Region, WinType},
-        helpers::spawn_for_output,
+        helpers::CODE_MAP_STRING,
         screen::Screen,
         xconnection::{
             Atom, ClientAttr, ClientConfig, ClientEventMask, ClientMessage, ClientMessageData,
@@ -45,11 +45,7 @@ fn default_conn() -> xcb::Connection {
  * binary on your system or if the output of `xmodmap -pke` is not valid
  */
 pub fn code_map_from_xmodmap() -> Result<ReverseCodeMap> {
-    let output = match spawn_for_output("xmodmap -pke") {
-        Ok(s) => s,
-        Err(e) => return Err(XcbError::Raw(e.to_string())), // failed to spawn
-    };
-    Ok(output
+    Ok(CODE_MAP_STRING
         .lines()
         .flat_map(|l| {
             let mut words = l.split_whitespace(); // keycode <code> = <names ...>

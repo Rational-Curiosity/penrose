@@ -144,6 +144,9 @@ extern crate tracing;
 extern crate serde;
 
 #[macro_use]
+extern crate lazy_static;
+
+#[macro_use]
 pub mod core;
 
 pub mod contrib;
