@@ -128,7 +128,7 @@ impl Screens {
     pub fn focus_screen(&mut self, sel: &Selector<'_, Screen>) -> Vec<EventAction> {
         match self.inner.focus(sel) {
             Some((true, focused)) => vec![
-                EventAction::SetActiveWorkspace(focused.wix),
+                EventAction::SetScreenActiveWorkspace(focused.wix),
                 EventAction::RunHook(HookName::ScreenChange),
             ],
             _ => vec![],
