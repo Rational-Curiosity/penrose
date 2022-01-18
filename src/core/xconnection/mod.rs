@@ -167,7 +167,7 @@ pub trait XState: XAtomQuerier {
 
     /// Checks cursor over client
     #[stub(false)]
-    fn cursor_over_client(&self, pointer_change: &PointerChange) -> bool;
+    fn cursor_over_client(&self, id: Xid) -> bool;
 
     /// Run on startup/restart to determine already running windows that we need to track
     #[stub(Ok(vec![]))]

@@ -297,16 +297,18 @@ macro_rules! __xcb_impl_xstate {
                 Ok(self.api.client_geometry(id)?)
             }
 
-            fn cursor_over_client(&self, pointer_change: &PointerChange) -> bool {
-                let cursor_position = pointer_change.relative;
-                if let Ok(client_geometry) = self.api.client_geometry(pointer_change.id)
+            fn cursor_over_client(&self, id: Xid) -> bool {
+                if let Ok(cursor_position) = self.api.cursor_position()
                 {
-                    if client_geometry.x < cursor_position.x &&
-                        client_geometry.y < cursor_position.y &&
-                        cursor_position.x < client_geometry.x + client_geometry.w &&
-                        cursor_position.y < client_geometry.y + client_geometry.h
+                    if let Ok(client_geometry) = self.api.client_geometry(id)
                     {
-                        return true;
+                        if client_geometry.x < cursor_position.x &&
+                            client_geometry.y < cursor_position.y &&
+                            cursor_position.x < client_geometry.x + client_geometry.w &&
+                            cursor_position.y < client_geometry.y + client_geometry.h
+                        {
+                            return true;
+                        }
                     }
                 }
                 false

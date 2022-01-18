@@ -78,7 +78,7 @@ where
         XEvent::Expose(_) => vec![], // FIXME: work out if this needs handling in the WindowManager
         XEvent::FocusIn(id) => vec![EventAction::FocusIn(id)],
         XEvent::KeyPress(code) => vec![EventAction::RunKeyBinding(code)],
-        XEvent::Leave(p) => if conn.cursor_over_client(&p) {vec![]} else {vec![
+        XEvent::Leave(p) => if conn.cursor_over_client(p.id) {vec![]} else {vec![
             EventAction::ClientFocusLost(p.id),
             EventAction::SetScreenFromPoint(Some(p.abs)),
         ]},
