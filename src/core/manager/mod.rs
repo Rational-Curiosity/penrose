@@ -882,7 +882,7 @@ impl<X: XConn> WindowManager<X> {
         Ok(())
     }
 
-    fn cursor_over_client(&mut self, id: Xid) -> bool {
+    fn cursor_over_client(&self, id: Xid) -> bool {
         if let Ok(cursor_position) = self.conn.cursor_position()
         {
             if let Ok(client_geometry) = self.conn.client_geometry(id)

@@ -165,6 +165,10 @@ pub trait XState: XAtomQuerier {
     #[stub(Ok(Region::default()))]
     fn client_geometry(&self, id: Xid) -> Result<Region>;
 
+    /// Checks cursor over client
+    #[stub(false)]
+    fn cursor_over_client(&self, pointer_change: &PointerChange) -> bool;
+
     /// Run on startup/restart to determine already running windows that we need to track
     #[stub(Ok(vec![]))]
     fn active_clients(&self) -> Result<Vec<Xid>>;

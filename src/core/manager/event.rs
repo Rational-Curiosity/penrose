@@ -6,7 +6,7 @@ use crate::core::{
     hooks::HookName,
     manager::state::WmState,
     xconnection::{
-        Atom, ClientMessage, ConfigureEvent, PointerChange, PropertyEvent, XAtomQuerier, XEvent,
+        Atom, ClientMessage, ConfigureEvent, PointerChange, PropertyEvent, XAtomQuerier, XState, XEvent,
         Xid,
     },
 };
@@ -70,7 +70,7 @@ pub enum EventAction {
 
 pub(super) fn process_next_event<X>(event: XEvent, state: &WmState, conn: &X) -> Vec<EventAction>
 where
-    X: XAtomQuerier,
+    X: XState,
 {
     match event {
         // Direct 1-n mappings of XEvents -> EventActions
@@ -78,10 +78,10 @@ where
         XEvent::Expose(_) => vec![], // FIXME: work out if this needs handling in the WindowManager
         XEvent::FocusIn(id) => vec![EventAction::FocusIn(id)],
         XEvent::KeyPress(code) => vec![EventAction::RunKeyBinding(code)],
-        XEvent::Leave(p) => vec![
+        XEvent::Leave(p) => if conn.cursor_over_client(&p) {vec![]} else {vec![
             EventAction::ClientFocusLost(p.id),
             EventAction::SetScreenFromPoint(Some(p.abs)),
-        ],
+        ]},
         XEvent::MouseEvent(evt) => vec![EventAction::RunMouseBinding(evt)],
         XEvent::RandrNotify => vec![EventAction::DetectScreens],
         XEvent::ScreenChange => vec![EventAction::SetScreenFromPoint(None)],
