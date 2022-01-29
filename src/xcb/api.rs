@@ -45,8 +45,7 @@ fn default_conn() -> xcb::Connection {
  * binary on your system or if the output of `xmodmap -pke` is not valid
  */
 pub fn code_map_from_xmodmap() -> Result<ReverseCodeMap> {
-    Ok(CODE_MAP_STRING
-        .lines()
+    Ok(CODE_MAP_STRING.lines().rev()
         .flat_map(|l| {
             let mut words = l.split_whitespace(); // keycode <code> = <names ...>
             let key_code: u8 = match words.nth(1) {

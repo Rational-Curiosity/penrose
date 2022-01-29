@@ -120,7 +120,7 @@ lazy_static! {
 /// This function will panic if it is unable to fetch keycodes using the xmodmap
 /// binary on your system or if the output of `xmodmap -pke` is not valid
 pub fn keycodes_from_xmodmap() -> CodeMap {
-    CODE_MAP_STRING.lines()
+    CODE_MAP_STRING.lines().rev()
     .flat_map(|l| {
         let mut words = l.split_whitespace(); // keycode <code> = <names ...>
         let key_code: u8 = match words.nth(1) {
