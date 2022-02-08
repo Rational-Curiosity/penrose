@@ -797,9 +797,9 @@ pub enum XKeySym {
     /// XK_underscore
     #[strum(serialize = "underscore")]
     XK_underscore,
-    /// XK_grave
-    #[strum(serialize = "grave")]
-    XK_grave,
+    /// XK_dead_grave
+    #[strum(serialize = "dead_grave")]
+    XK_dead_grave,
     /// XK_quoteleft
     #[strum(serialize = "quoteleft")]
     XK_quoteleft,
@@ -2318,7 +2318,7 @@ impl XKeySym {
                 XKeySym::XK_bracketright => 0x005d,
                 XKeySym::XK_asciicircum => 0x005e,
                 XKeySym::XK_underscore => 0x005f,
-                XKeySym::XK_grave => 0x0060,
+                XKeySym::XK_dead_grave => 0x0060,
                 XKeySym::XK_quoteleft => 0x0060,
                 XKeySym::XK_a => 0x0061,
                 XKeySym::XK_b => 0x0062,
