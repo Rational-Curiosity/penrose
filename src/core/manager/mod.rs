@@ -226,7 +226,7 @@ impl<X: XConn> WindowManager<X> {
         }
 
         if let Some(id) = self.workspaces.focused_client(0) {
-            self.update_focus(id)?;
+            self.update_focus(id, false)?;
         }
 
         self.update_known_x_clients()?;
@@ -304,7 +304,7 @@ impl<X: XConn> WindowManager<X> {
         use EventAction::*;
 
         match action {
-            ClientFocusGained(id) => self.update_focus(id)?,
+            ClientFocusGained(id) => self.update_focus(id, false)?,
             ClientFocusLost(id) => self.state.clients.client_lost_focus(id, &self.conn),
             ClientNameChanged(id, is_root) => {
                 let action = self
@@ -425,7 +425,7 @@ impl<X: XConn> WindowManager<X> {
 
     // Set the current focus point based on client focus hints
     #[tracing::instrument(level = "trace", err, skip(self))]
-    fn update_focus(&mut self, id: Xid) -> Result<()> {
+    fn update_focus(&mut self, id: Xid, interactive: bool) -> Result<()> {
         let target = if self.clients.is_known(id) {
             id
         } else {
@@ -467,7 +467,7 @@ impl<X: XConn> WindowManager<X> {
 
         if let Some(ws) = self.workspaces.get_mut(wix) {
             ws.focus_client(target);
-            let in_ws = prev.map_or(false, |prev_id| ws.client_ids().contains(&prev_id));
+            let in_ws = prev.map_or(interactive, |prev_id| ws.client_ids().contains(&prev_id));
             if ws.layout_conf().follow_focus && in_ws {
                 if let Err(e) = self.apply_layout(wix) {
                     error!("unable to apply layout on ws {}: {}", wix, e);
@@ -512,8 +512,10 @@ impl<X: XConn> WindowManager<X> {
             self.clients.set_client_workspace(id, wix);
 
             if self.screens.visible_workspaces().contains(&wix) {
-                let s = self.screens.focused();
-                self.conn.warp_cursor(Some(id), s, &self.config)?;
+                if !self.cursor_over_client(id)
+                {
+                    self.conn.warp_cursor(Some(id), self.screens.focused(), &self.config)?;
+                }
             } else {
                 self.state.clients.unmap_if_needed(id, &self.conn)?;
             }
@@ -588,14 +590,17 @@ impl<X: XConn> WindowManager<X> {
         }
 
         self.conn.mark_new_client(id)?;
-        self.update_focus(id)?;
+        self.update_focus(id, false)?;
         self.update_known_x_clients()?;
 
         if wix == self.screens.active_ws_index() {
             self.apply_layout(wix)?;
             self.state.clients.map_if_needed(id, &self.conn)?;
             let s = self.screens.focused();
-            self.conn.warp_cursor(Some(id), s, &self.config)?;
+            if !self.cursor_over_client(id)
+            {
+                self.conn.warp_cursor(Some(id), s, &self.config)?;
+            }
         }
 
         Ok(())
@@ -874,9 +879,12 @@ impl<X: XConn> WindowManager<X> {
         let res = self.workspaces.cycle_client(wix, direction);
         if let Some((prev, new)) = res {
             self.state.clients.client_lost_focus(prev, &self.conn);
-            self.update_focus(new)?;
+            self.update_focus(new, true)?;
             let screen = self.screens.focused();
-            self.conn.warp_cursor(Some(new), screen, &self.config)?;
+            if !self.cursor_over_client(new)
+            {
+                self.conn.warp_cursor(Some(new), screen, &self.config)?;
+            }
         }
 
         Ok(())
@@ -913,11 +921,10 @@ impl<X: XConn> WindowManager<X> {
         }
 
         // update focused client if there is a new client that is in focus
-        self.update_focus(id)?;
+        self.update_focus(id, true)?;
         if !self.cursor_over_client(id)
         {
-            let screen = self.screens.focused();
-            self.conn.warp_cursor(Some(id), screen, &self.config)?;
+            self.conn.warp_cursor(Some(id), self.screens.focused(), &self.config)?;
         }
         Ok(id)
     }
@@ -938,8 +945,11 @@ impl<X: XConn> WindowManager<X> {
             let wix = self.screens.active_ws_index();
             self.workspaces.drag_client(wix, direction);
             self.apply_layout(wix)?;
-            self.update_focus(id)?;
-            self.conn.warp_cursor(Some(id), self.screens.focused(), &self.config)?;
+            self.update_focus(id, true)?;
+            if !self.cursor_over_client(id)
+            {
+                self.conn.warp_cursor(Some(id), self.screens.focused(), &self.config)?;
+            }
         }
 
         Ok(())
@@ -1047,7 +1057,7 @@ impl<X: XConn> WindowManager<X> {
 
                     let ws = self.workspaces.get_workspace(index)?;
                     if let Some(id) = ws.focused_client() {
-                        self.update_focus(id)?;
+                        self.update_focus(id, false)?;
                     };
 
                     self.workspaces.focus(&Selector::Index(index));
@@ -1074,7 +1084,7 @@ impl<X: XConn> WindowManager<X> {
 
             let ws = self.workspaces.get_workspace(index)?;
             if let Some(id) = ws.focused_client() {
-                self.update_focus(id)?;
+                self.update_focus(id, false)?;
             };
 
             self.workspaces.focus(&Selector::Index(index));
@@ -1496,7 +1506,7 @@ mod tests {
     fn x_focus_events_set_workspace_focus() {
         let mut wm = wm_with_mock_conn(vec![], vec![]);
         add_n_clients(&mut wm, 5, 0); // focus on last client: 50
-        wm.update_focus(10).unwrap();
+        wm.update_focus(10, false).unwrap();
 
         assert_eq!(wm.workspaces[0].focused_client(), Some(10));
     }
@@ -1531,7 +1541,7 @@ mod tests {
         assert_eq!(wm.clients.focused_client_id(), Some(50));
         assert_eq!(clients(&mut wm), vec![40, 30, 50, 20, 10]);
 
-        wm.update_focus(20).unwrap();
+        wm.update_focus(20, false).unwrap();
         wm.drag_client(Forward).unwrap();
         assert_eq!(wm.clients.focused_client_id(), Some(20));
         assert_eq!(clients(&mut wm), vec![40, 30, 50, 10, 20]);
@@ -1854,7 +1864,7 @@ mod tests {
             wm.clients.modify(target, |c| c.accepts_focus = accepts_focus);
             wm.conn().clear();
 
-            wm.update_focus(target).unwrap();
+            wm.update_focus(target, false).unwrap();
 
             assert_eq!(wm.clients.focused_client_id(), expected_focus);
             assert_eq!(wm.conn().calls(), expected_calls);
